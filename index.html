@@ -1,198 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Простий чат — (fallback friendly)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вхід</title>
   <style>
-    :root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f3f4f6}
-    .app{width:100%;max-width:720px;background:white;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;height:80vh}
-    header{padding:12px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px}
-    header h1{font-size:16px;margin:0}
-    #messages{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,#fff,#fbfbfd)}
-    .msg{max-width:75%;padding:8px 12px;border-radius:10px;box-shadow:0 1px 0 rgba(0,0,0,0.03)}
-    .mine{align-self:flex-end;background:#dcfce7}
-    .other{align-self:flex-start;background:#eef2ff}
-    .meta{font-size:12px;color:#666;margin-bottom:4px}
-    form{display:flex;padding:12px;border-top:1px solid #eee}
-    input[type=text]{flex:1;padding:10px;border-radius:10px;border:1px solid #ddd;margin-right:8px}
-    button{padding:10px 14px;border-radius:10px;border:none;background:#2563eb;color:white;font-weight:600}
-    .name-chip{background:#111827;color:white;padding:6px 10px;border-radius:999px;font-size:13px}
-    .small{font-size:13px;color:#555}
-    .status{padding:8px 12px;font-size:13px}
-    .error{color:#b91c1c}
-    .hint{font-size:13px;color:#374151}
-    .muted{color:#6b7280;font-size:13px}
+    body { font-family: Arial; padding: 30px; background: #f3f3f3; }
+    .card { max-width: 350px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>Простий чат</h1>
-      <div style="flex:1"></div>
-      <div class="small">Ваше ім'я: <span id="nameChip" class="name-chip">—</span></div>
-    </header>
-
-    <div id="messages" aria-live="polite"></div>
-
-    <div id="status" class="status muted">Підключення...</div>
-
-    <form id="sendForm">
-      <input id="text" type="text" placeholder="Напиши повідомлення..." autocomplete="off" />
-      <button type="submit">Відправити</button>
-    </form>
-    <div style="padding:10px 12px;border-top:1px solid #eee;background:#fafafa;font-size:13px">
-      <div id="notice" class="hint">Примітка: якщо Firebase не налаштовано або виникають помилки з доступом, чат автоматично працюватиме локально в вашому браузері (localStorage).</div>
-    </div>
+  <div class="card">
+    <h2>Введи своє ім'я</h2>
+    <input id="nameInput" placeholder="Ім'я" />
+    <button onclick="saveName()">Увійти</button>
   </div>
 
-  <script type="module">
-    const firebaseConfig = {
-        apiKey: "AIzaSyBEnGxRmHuNR2IBWXECZSZVwnA7H0nVLiw",
-        authDomain: "chat-9e8cc.firebaseapp.com",
-        projectId: "chat-9e8cc",
-        storageBucket: "chat-9e8cc.firebasestorage.app",
-        messagingSenderId: "437994198544",
-        appId: "1:437994198544:web:8f97acf5ad26eda9f91c95"
-    };
-
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
-
-    const messagesEl = document.getElementById('messages');
-    const form = document.getElementById('sendForm');
-    const textInput = document.getElementById('text');
-    const nameChip = document.getElementById('nameChip');
-    const statusEl = document.getElementById('status');
-
-    const STORAGE_KEY = 'simple_chat_name';
-    const LOCAL_MSGS_KEY = 'simple_chat_local_msgs_v1';
-
-    let myName = localStorage.getItem(STORAGE_KEY);
-    if(!myName){
-      const idx = Math.floor(Math.random()*90000)+10000;
-      myName = 'Гість-' + idx;
-      localStorage.setItem(STORAGE_KEY, myName);
+  <script>
+    function saveName() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) return alert('Введи імʼя');
+      localStorage.setItem('chatName', name);
+      location.href = 'topics.html';
     }
-
-    // Додаємо унікальний id для кожного клієнта, щоб повідомлення від одного імені різних користувачів не змішувалися
-    let myId = localStorage.getItem('simple_chat_uid');
-    if(!myId){ myId = Math.random().toString(36).substr(2,9); localStorage.setItem('simple_chat_uid', myId); }
-
-    nameChip.textContent = myName;
-
-    const nameInputContainer = document.createElement('div');
-    nameInputContainer.style = "padding:12px;border-top:1px solid #eee;display:flex;gap:8px";
-    nameInputContainer.innerHTML = `
-      <input id="nameInput" type="text" placeholder="Введіть ім'я..." style="flex:1;padding:8px;border:1px solid #ccc;border-radius:6px" />
-      <button id="saveNameBtn" style="padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:white">OK</button>
-    `;
-
-    const nameInput = nameInputContainer.querySelector('#nameInput');
-    const saveNameBtn = nameInputContainer.querySelector('#saveNameBtn');
-    document.querySelector('.app').insertBefore(nameInputContainer, document.getElementById('messages'));
-
-    nameInput.value = myName;
-    nameInputContainer.style.display = 'none';
-
-    saveNameBtn.onclick = () => {
-      const nm = nameInput.value.trim();
-      if(!nm) return;
-      const idx = Math.floor(Math.random()*90000)+10000;
-      myName = nm + '-' + idx;
-      localStorage.setItem(STORAGE_KEY, myName);
-      nameChip.textContent = myName;
-      nameInputContainer.style.display = 'none';
-    };
-
-    nameChip.addEventListener('click', () => {
-      nameInputContainer.style.display = '';
-      nameInput.value = myName.split('-')[0];
-    });
-
-    function renderMessage(m){
-      const who = m.name || 'Анонім';
-      const txt = m.text || '';
-      const time = m.ts ? new Date(m.ts) : null;
-      const mine = (m.uid === myId);
-      const msgEl = document.createElement('div');
-      msgEl.className = 'msg ' + (mine ? 'mine' : 'other');
-
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.textContent = who + (time ? ' — ' + time.toLocaleTimeString() : '');
-      if(m.local){ meta.textContent += ' (локальне)'; }
-
-      const body = document.createElement('div');
-      body.textContent = txt;
-
-      msgEl.appendChild(meta);
-      msgEl.appendChild(body);
-      messagesEl.appendChild(msgEl);
-    }
-
-    function scrollToBottom(){ messagesEl.scrollTop = messagesEl.scrollHeight; }
-
-    function loadLocalMessages(){ try{ const raw = localStorage.getItem(LOCAL_MSGS_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } }
-    function saveLocalMessages(arr){ try{ localStorage.setItem(LOCAL_MSGS_KEY, JSON.stringify(arr)); }catch(e){} }
-    function renderAllMessages(arr){ messagesEl.innerHTML=''; arr.forEach(renderMessage); scrollToBottom(); }
-
-    const looksLikePlaceholder = (cfg) => Object.values(cfg).some(v => typeof v === 'string' && v.startsWith('REPLACE'));
-    let useFirestore = false, unsubscribe = null;
-
-    async function startRealtime(){
-      if(looksLikePlaceholder(firebaseConfig)){
-        statusEl.textContent = 'Firestore не налаштовано — працюємо локально.';
-        renderAllMessages(loadLocalMessages());
-        return;
-      }
-      try{
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const msgsCol = collection(db,'simple_chat_messages');
-        const q = query(msgsCol, orderBy('ts'));
-        useFirestore = true;
-
-        unsubscribe = onSnapshot(q, snap => {
-          const msgs = [];
-          snap.forEach(doc=>{
-            const d = doc.data();
-            let ts = d.ts && d.ts.toMillis ? d.ts.toMillis() : d.ts || Date.now();
-            msgs.push({ id: doc.id, name: d.name, text: d.text, ts, uid: d.uid });
-          });
-          const local = loadLocalMessages();
-          renderAllMessages(msgs.concat(local));
-          statusEl.textContent = 'Синхронізовано — ' + msgs.length + ' повідомлень.';
-        }, err=>{
-          console.error(err);
-          statusEl.textContent='Помилка Firestore — локальний режим.';
-          renderAllMessages(loadLocalMessages());
-          useFirestore=false;
-        });
-      }catch(e){ console.error(e); renderAllMessages(loadLocalMessages()); useFirestore=false; }
-    }
-
-    startRealtime();
-
-    form.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const txt = textInput.value.trim();
-      if(!txt) return;
-      const payload = { name: myName, text: txt, ts: Date.now(), uid: myId };
-      if(useFirestore){
-        try{ await addDoc(collection(getFirestore(),'simple_chat_messages'), { ...payload, ts: serverTimestamp() });
-          textInput.value=''; textInput.focus();
-        }catch(e){
-          const local = loadLocalMessages(); local.push({...payload, local:true}); saveLocalMessages(local); renderAllMessages(local);
-          statusEl.textContent='Повідомлення локально (помилка Firestore)';
-        }
-      }else{
-        const local = loadLocalMessages(); local.push({...payload, local:true}); saveLocalMessages(local); renderAllMessages(local);
-        statusEl.textContent='Локальне повідомлення збережено';
-        textInput.value=''; textInput.focus();
-      }
-    });
   </script>
 </body>
 </html>

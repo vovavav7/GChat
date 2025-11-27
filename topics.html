@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Темы</title>
+  <style>
+    body { font-family: Arial; padding: 30px; background: #f3f3f3; }
+    .card { max-width: 400px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; }
+    button { width: 100%; padding: 12px; margin-top: 10px; font-size: 17px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Вибери тему чату</h2>
+
+    <button onclick="go('chat_programming.html')">💻 Програмування</button>
+    <button onclick="go('chat_communication.html')">💬 Общение</button>
+  </div>
+
+  <script>
+    if (!localStorage.getItem('chatName')) location.href = 'index.html';
+
+    function go(page) {
+      location.href = page;
+    }
+  </script>
+</body>
+</html>

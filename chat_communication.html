@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Чат — Спілкування</title>
+  <style>
+    :root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    body{margin:0;background:#f3f4f6;display:flex;justify-content:center;align-items:center;height:100vh}
+    .app{width:100%;max-width:720px;background:white;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;height:80vh}
+    header{padding:12px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px}
+    header a{text-decoration:none;color:#2563eb;font-weight:600}
+    #messages{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,#fff,#fafafe)}
+    .msg{max-width:75%;padding:8px 12px;border-radius:10px;box-shadow:0 1px 0 rgba(0,0,0,0.03)}
+    .mine{align-self:flex-end;background:#dcfce7}
+    .other{align-self:flex-start;background:#eef2ff}
+    .meta{font-size:12px;color:#666;margin-bottom:4px}
+    form{display:flex;padding:12px;border-top:1px solid #eee}
+    input[type=text]{flex:1;padding:10px;border-radius:10px;border:1px solid #ddd;margin-right:8px}
+    button{padding:10px 14px;border-radius:10px;border:none;background:#2563eb;color:white;font-weight:600}
+    .status{padding:6px 12px;font-size:13px;color:#444;border-top:1px solid #eee;background:#fafafa}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <a href="topics.html">← Назад</a>
+      <h2 style="margin:0;font-size:17px">Чат: Спілкування</h2>
+    </header>
+
+    <div id="messages"></div>
+
+    <div id="status" class="status">Підключення...</div>
+
+    <form id="sendForm">
+      <input id="text" type="text" placeholder="Напиши повідомлення..." autocomplete="off" />
+      <button type="submit">OK</button>
+    </form>
+  </div>
+
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEnGxRmHuNR2IBWXECZSZVwnA7H0nVLiw",
+      authDomain: "chat-9e8cc.firebaseapp.com",
+      databaseURL: "https://chat-9e8cc-default-rtdb.firebaseio.com/",
+      projectId: "chat-9e8cc",
+      storageBucket: "chat-9e8cc.firebasestorage.app",
+      messagingSenderId: "437994198544",
+      appId: "1:437994198544:web:8f97acf5ad26eda9f91c95"
+    };
+
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+
+    const messagesEl = document.getElementById('messages');
+    const form = document.getElementById('sendForm');
+    const textInput = document.getElementById('text');
+    const statusEl = document.getElementById('status');
+
+    const NAME_KEY = 'chat_name_global';
+    let myName = localStorage.getItem(NAME_KEY) || `Гість-${Math.floor(Math.random()*90000+10000)}`;
+    localStorage.setItem(NAME_KEY, myName);
+
+    let myId = localStorage.getItem('chat_uid');
+    if(!myId){ myId = Math.random().toString(36).substr(2,9); localStorage.setItem('chat_uid', myId); }
+
+    function renderMessage(m){
+      const msgEl = document.createElement('div');
+      msgEl.className = 'msg ' + (m.uid === myId ? 'mine' : 'other');
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = m.name + ' — ' + new Date(m.ts).toLocaleTimeString();
+      const body = document.createElement('div'); body.textContent = m.text;
+      msgEl.appendChild(meta); msgEl.appendChild(body);
+      messagesEl.appendChild(msgEl);
+    }
+
+    function scroll(){ messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+    async function start(){
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const col = collection(db, 'chat_room_communication');
+      const q = query(col, orderBy('ts'));
+
+      onSnapshot(q, snap => {
+        messagesEl.innerHTML = '';
+        snap.forEach(doc => {
+          const d = doc.data();
+          renderMessage({ name:d.name, text:d.text, ts:d.ts?.toMillis?.() ?? Date.now(), uid:d.uid });
+        });
+        scroll();
+        statusEl.textContent = 'Онлайн';
+      });
+
+      form.onsubmit = async e => {
+        e.preventDefault();
+        const t = textInput.value.trim(); if(!t) return;
+        textInput.value = '';
+        await addDoc(col, { name:myName, text:t, uid:myId, ts:serverTimestamp() });
+      };
+    }
+
+    start();
+  </script>
+</body>
+</html>
