@@ -59,7 +59,7 @@
     const textInput = document.getElementById('text');
     const statusEl = document.getElementById('status');
 
-    const NAME_KEY = 'chat_name_global';
+    const NAME_KEY = 'chatName';
     let myName = localStorage.getItem(NAME_KEY) || `Guest-${Math.floor(Math.random()*90000+10000)}`;
     localStorage.setItem(NAME_KEY, myName);
 
