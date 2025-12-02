@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Чат — Спілкування</title>
+  <title>Chat — Communication</title>
   <style>
     :root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
     body{margin:0;background:#f3f4f6;display:flex;justify-content:center;align-items:center;height:100vh}
@@ -24,16 +24,16 @@
 <body>
   <div class="app">
     <header>
-      <a href="topics.html">← Назад</a>
-      <h2 style="margin:0;font-size:17px">Чат: Програмування</h2>
+      <a href="topics.html">← Back</a>
+      <h2 style="margin:0;font-size:17px">Chat: Programming</h2>
     </header>
 
     <div id="messages"></div>
 
-    <div id="status" class="status">Підключення...</div>
+    <div id="status" class="status">Connecting...</div>
 
     <form id="sendForm">
-      <input id="text" type="text" placeholder="Напиши повідомлення..." autocomplete="off" />
+      <input id="text" type="text" placeholder="Write a message..." autocomplete="off" />
       <button type="submit">OK</button>
     </form>
   </div>
@@ -58,7 +58,7 @@
     const statusEl = document.getElementById('status');
 
     const NAME_KEY = 'chat_name_global';
-    let myName = localStorage.getItem(NAME_KEY) || `Гість-${Math.floor(Math.random()*90000+10000)}`;
+    let myName = localStorage.getItem(NAME_KEY) || `Guest-${Math.floor(Math.random()*90000+10000)}`;
     localStorage.setItem(NAME_KEY, myName);
 
     let myId = localStorage.getItem('chat_uid');
@@ -90,7 +90,7 @@
           renderMessage({ name:d.name, text:d.text, ts:d.ts?.toMillis?.() ?? Date.now(), uid:d.uid });
         });
         scroll();
-        statusEl.textContent = 'Онлайн';
+        statusEl.textContent = 'Online';
       });
 
       form.onsubmit = async e => {

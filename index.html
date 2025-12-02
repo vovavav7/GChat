@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Вхід</title>
+  <title>Login</title>
   <style>
     body { font-family: Arial; padding: 30px; background: #f3f3f3; }
     .card { max-width: 350px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; }
@@ -12,15 +12,15 @@
 </head>
 <body>
   <div class="card">
-    <h2>Введи своє ім'я</h2>
-    <input id="nameInput" placeholder="Ім'я" />
-    <button onclick="saveName()">Увійти</button>
+    <h2>Enter your name</h2>
+    <input id="nameInput" placeholder="Name" />
+    <button onclick="saveName()">Login</button>
   </div>
 
   <script>
     function saveName() {
       const name = document.getElementById('nameInput').value.trim();
-      if (!name) return alert('Введи імʼя');
+      if (!name) return alert('Enter your name');
       localStorage.setItem('chatName', name);
       location.href = 'topics.html';
     }
